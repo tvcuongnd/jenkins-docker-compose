@@ -1,44 +1,51 @@
 version: '3'
 services:
-  jenkins-docker:
-    command: --storage-driver=overlay2
-    image: docker:dind
+  sonarqube:
+    #command: --storage-driver=overlay2
+    image: sonarqube:8-community
     privileged: true
     ports:
-      - "2376:2376"
+      - "9000:9000"
     volumes:
       - "/etc/timezone:/etc/timezone:ro"
       - "/etc/localtime:/etc/localtime:ro"
-      - jenkins-docker-certs:/certs/client
-      - jenkins-data:/var/jenkins_home
-    environment:
-      - DOCKER_TLS_CERTDIR=/certs
+      - "sonarqube-data:/opt/sonarqube/data"
+      - "sonarqube-log:/opt/sonarqube/logs"
+      - "sonarqube-extension:/opt/sonarqube/extensions"
+    #environment:
+    #  - DOCKER_TLS_CERTDIR=/certs
     networks:
-      jenkins:
-        aliases:
-          - docker
-  jenkins-blueocean:
-    depends_on:
-      - jenkins-docker
-    image: jenkinsci/blueocean
+      - sonar-nexus
+        #name: jenkins-docker-compose_jenkins
+        #aliases:
+          #- docker
+  nexus3:
+    #depends_on:
+    #  - jenkins-docker
+    image: sonatype/nexus3:3.32.0
     ports:
-      - "8080:8080"
-      - "50000:50000"
+      - "8081:8081"
     volumes:
       - "/etc/timezone:/etc/timezone:ro"
       - "/etc/localtime:/etc/localtime:ro"
-      - jenkins-data:/var/jenkins_home
-      - jenkins-docker-certs:/certs/client:ro
-    environment:
-      - DOCKER_HOST=tcp://docker:2376
-      - DOCKER_CERT_PATH=/certs/client
-      - DOCKER_TLS_VERIFY=1
+      - "nexus-data:/nexus-data"
+    #environment:
+    #  - DOCKER_HOST=tcp://docker:2376
+    #  - DOCKER_CERT_PATH=/certs/client
+    #  - DOCKER_TLS_VERIFY=1
     networks:
-      - jenkins
+      - sonar-nexus
+        #name: jenkins-docker-compose_jenkins
 volumes:
-  jenkins-docker-certs:
-  jenkins-data:
-networks:
-  jenkins:
+  sonarqube-data:
+  sonarqube-log:
+  sonarqube-extension:
+  nexus-data:
+#networks:
+  #jenkins:
+    #name: jenkins-docker-compose_jenkins
   # Use a custom driver
+    #driver: bridge
+networks:
+  sonar-nexus:
     driver: bridge
